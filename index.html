@@ -1,0 +1,82 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>IA Generativa - Preguntas y Respuestas</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 2em;
+            background: #f4f4f4;
+        }
+        h1 {
+            color: #333;
+        }
+        textarea {
+            width: 100%;
+            height: 120px;
+            padding: 1em;
+            margin-bottom: 1em;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        button {
+            padding: 0.8em 1.5em;
+            font-size: 1em;
+            background: #007BFF;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .respuesta {
+            margin-top: 2em;
+            padding: 1em;
+            background: white;
+            border: 1px solid #ccc;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>IA Generativa - Preguntas y Respuestas</h1>
+    <p>Escribe tu pregunta o tema educativo. La IA te responderá automáticamente.</p>
+    <textarea id="entrada" placeholder="Ej. ¿Qué es la fotosíntesis?"></textarea>
+    <button onclick="enviarPregunta()">Enviar</button>
+    <div id="respuesta" class="respuesta"></div>
+
+    <script>
+        async function enviarPregunta() {
+            const prompt = document.getElementById("entrada").value;
+            const respuestaDiv = document.getElementById("respuesta");
+            respuestaDiv.innerText = "Procesando...";
+
+            const response = await fetch("https://api-inference.huggingface.co/models/moonshotai/Kimi-K2-Instruct", {
+                method: "POST",
+                headers: {
+                    "Authorization": "Bearer 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",
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ inputs: prompt })
+            });
+
+            const data = await response.json();
+
+            if (data && data.generated_text) {
+                respuestaDiv.innerText = data.generated_text;
+            } else if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
+                respuestaDiv.innerText = data[0].generated_text;
+            } else {
+                respuestaDiv.innerText = "No se pudo obtener una respuesta. Intenta nuevamente.";
+            }
+        }
+    </script>
+</body>
+</html>
