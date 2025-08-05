@@ -36,12 +36,17 @@
         button:hover {
             background: #0056b3;
         }
-        .respuesta {
+        .respuesta, .logs {
             margin-top: 2em;
             padding: 1em;
             background: white;
             border: 1px solid #ccc;
             white-space: pre-wrap;
+        }
+        .logs {
+            font-size: 0.85em;
+            color: #555;
+            background: #f9f9f9;
         }
     </style>
 </head>
@@ -50,31 +55,43 @@
     <p>Escribe tu pregunta o tema educativo. La IA te responderá automáticamente.</p>
     <textarea id="entrada" placeholder="Ej. ¿Qué es la fotosíntesis?"></textarea>
     <button onclick="enviarPregunta()">Enviar</button>
-    <div id="respuesta" class="respuesta"></div>
+    
+    <div id="respuesta" class="respuesta">Esperando entrada...</div>
+    <div id="logs" class="logs">🧪 Logs de depuración:</div>
 
     <script>
         async function enviarPregunta() {
             const prompt = document.getElementById("entrada").value;
             const respuestaDiv = document.getElementById("respuesta");
+            const logsDiv = document.getElementById("logs");
             respuestaDiv.innerText = "Procesando...";
+            logsDiv.innerText = "🧪 Logs de depuración:\nEnviando solicitud...";
 
-            const response = await fetch("https://api-inference.huggingface.co/models/moonshotai/Kimi-K2-Instruct", {
-                method: "POST",
-                headers: {
-                    "Authorization": "Bearer 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",
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({ inputs: prompt })
-            });
+            try {
+                const response = await fetch("https://api-inference.huggingface.co/models/moonshotai/Kimi-K2-Instruct", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": "Bearer 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",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ inputs: prompt })
+                });
 
-            const data = await response.json();
+                const data = await response.json();
+                logsDiv.innerText += "\nRespuesta JSON cruda:\n" + JSON.stringify(data, null, 2);
 
-            if (data && data.generated_text) {
-                respuestaDiv.innerText = data.generated_text;
-            } else if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
-                respuestaDiv.innerText = data[0].generated_text;
-            } else {
-                respuestaDiv.innerText = "No se pudo obtener una respuesta. Intenta nuevamente.";
+                if (data && data.generated_text) {
+                    respuestaDiv.innerText = data.generated_text;
+                } else if (Array.isArray(data) && data.length > 0 && data[0].generated_text) {
+                    respuestaDiv.innerText = data[0].generated_text;
+                } else if (data.error) {
+                    respuestaDiv.innerText = "❌ Error: " + data.error;
+                } else {
+                    respuestaDiv.innerText = "No se pudo obtener una respuesta. Intenta nuevamente.";
+                }
+            } catch (error) {
+                respuestaDiv.innerText = "❌ Error de red o ejecución.";
+                logsDiv.innerText += "\n⚠️ Excepción capturada:\n" + error;
             }
         }
     </script>
